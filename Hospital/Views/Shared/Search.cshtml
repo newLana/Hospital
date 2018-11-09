@@ -1,0 +1,7 @@
+﻿@using (Html.BeginForm("Index", "Doctor", FormMethod.Get))
+{
+    <div class="form-group">
+        @Html.TextBox("searchKey")
+        <input type="submit" value="Search" class="btn btn-default" />
+    </div>
+}
