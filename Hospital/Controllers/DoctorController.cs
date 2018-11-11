@@ -62,10 +62,8 @@ namespace Hospital.Controllers
                 {
                     Name = viewModel.Name
                 };
-                foreach (Specialization item in GetSpecs(viewModel.SpecIds))
-                {
-                    doctor.Specializations.Add(item);
-                }                
+                doctor.Specializations.AddRange(db.Specializations.GetAll().Where(s =>
+                             viewModel.SpecIds.Contains(s.Id)));
                 db.Doctors.Create(doctor);
                 return RedirectToAction("Index");
             }
@@ -106,37 +104,15 @@ namespace Hospital.Controllers
                 Doctor doctor = db.Doctors.Get(viewModel.Id);
                 doctor.Name = viewModel.Name;
                 doctor.Specializations.Clear();
-                foreach (Specialization item in GetSpecs(viewModel.SpecIds))
-                {
-                    doctor.Specializations.Add(item);
-                }
+                doctor.Specializations.AddRange(db.Specializations.GetAll().Where(s =>
+                            viewModel.SpecIds.Contains(s.Id)));
                 doctor.Patients.Clear();
-                foreach (Patient item in GetPatients(viewModel.PatientIds))
-                {
-                    doctor.Patients.Add(item);
-                }
+                doctor.Patients.AddRange(db.Patients.GetAll().Where(p =>
+                        viewModel.PatientIds.Contains(p.Id)));
                 db.Doctors.Update(doctor);
                 return RedirectToAction("Index");
             }
             return View(viewModel);
-        }
-
-        private IEnumerable<Specialization> GetSpecs(IEnumerable<int> ids)
-        {
-            if (ids != null)
-            {
-                return db.Specializations.GetAll().Where(s => ids.Contains(s.Id));
-            }
-            return Enumerable.Empty<Specialization>();
-        }
-
-        private IEnumerable<Patient> GetPatients(IEnumerable<int> ids)
-        {
-            if (ids != null)
-            {
-                return db.Patients.GetAll().Where(s => ids.Contains(s.Id));
-            }
-            return Enumerable.Empty<Patient>();
         }
 
         [HttpGet]
@@ -155,6 +131,7 @@ namespace Hospital.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Delete(int id)
         {
             db.Doctors.Delete(id);            

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Web;
-using System.Web.Mvc;
+﻿using System.Collections.Generic;
 
 namespace Hospital.Models
 {
@@ -17,7 +11,7 @@ namespace Hospital.Models
         public virtual List<Specialization> Specializations { get; set; } = 
             new List<Specialization>();
         
-        public virtual ICollection<Patient> Patients { get; set; } = 
+        public virtual List<Patient> Patients { get; set; } = 
             new List<Patient>();
     }
 }

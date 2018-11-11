@@ -153,6 +153,7 @@
     <Compile Include="Controllers\DoctorController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\PatientController.cs" />
+    <Compile Include="Controllers\SpecializationController.cs" />
     <Compile Include="DAL\Abstracts\IDataBaseUnit.cs" />
     <Compile Include="DAL\DependencyInjection\NinjectRegistration.cs" />
     <Compile Include="DAL\Repositories\EfRepository\HospitalDbInitializer.cs" />
@@ -168,6 +169,7 @@
     <Compile Include="Models\Entities\Specialization.cs" />
     <Compile Include="Models\Entities\Patient.cs" />
     <Compile Include="Models\Entities\PatientStatus.cs" />
+    <Compile Include="Models\SpecializationViewModel.cs" />
     <Compile Include="Models\PatientViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -188,6 +190,11 @@
     <Content Include="Views\Patient\Edit.cshtml" />
     <Content Include="Views\Patient\Delete.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
+    <Content Include="Views\Specialization\Index.cshtml" />
+    <Content Include="Views\Specialization\Create.cshtml" />
+    <Content Include="Views\Specialization\Details.cshtml" />
+    <Content Include="Views\Specialization\Delete.cshtml" />
+    <Content Include="Views\Specialization\Edit.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

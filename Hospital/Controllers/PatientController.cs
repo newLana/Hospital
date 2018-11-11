@@ -66,23 +66,12 @@ namespace Hospital.Controllers
                     Birthday = viewModel.Birthday,
                     TaxCode = viewModel.TaxCode
                 };
-                foreach (var item in GetDocs(viewModel.DocIds))
-                {
-                    patient.Doctors.Add(item);
-                }
+                patient.Doctors.AddRange(db.Doctors.GetAll()
+                                .Where(d => viewModel.DocIds.Contains(d.Id)));
                 db.Patients.Create(patient);
                 return RedirectToAction("Index");
             }
             return View(viewModel);
-        }
-
-        private IEnumerable<Doctor> GetDocs(List<int> docIds)
-        {
-            if (docIds != null)
-            {
-                return db.Doctors.GetAll().Where(d => docIds.Contains(d.Id));
-            }
-            return Enumerable.Empty<Doctor>();
         }
 
         [HttpGet]
@@ -111,6 +100,7 @@ namespace Hospital.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Edit([Bind(Include = "Id,Name,Status,Birthday,TaxCode,DocIds")]
                                                     PatientViewModel viewModel)
         {
@@ -122,7 +112,8 @@ namespace Hospital.Controllers
                 patient.Birthday = viewModel.Birthday;
                 patient.TaxCode = viewModel.TaxCode;
                 patient.Doctors.Clear();
-                patient.Doctors.AddRange(GetDocs(viewModel.DocIds));
+                patient.Doctors.AddRange(db.Doctors.GetAll().Where(d => 
+                            viewModel.DocIds.Contains(d.Id)));
                 db.Patients.Update(patient);
                 return RedirectToAction("Index");
             }
@@ -145,6 +136,7 @@ namespace Hospital.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public ActionResult Delete(int id)
         {
             db.Patients.Delete(id);

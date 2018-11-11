@@ -8,7 +8,7 @@ namespace Hospital.Models
 
         public string Name { get; set; }
 
-        public List<Doctor> Doctors { get; set; } = 
+        public virtual List<Doctor> Doctors { get; set; } = 
             new List<Doctor>();
     }
 }
