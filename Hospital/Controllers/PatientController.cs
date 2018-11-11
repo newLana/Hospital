@@ -1,18 +1,21 @@
-﻿using Hospital.DAL.Repository.EfRepository;
+﻿using Hospital.DAL.Abstracts;
 using Hospital.Models;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Net;
-using System.Web;
 using System.Web.Mvc;
 
 namespace Hospital.Controllers
 {
     public class PatientController : Controller
     {
-        HospitalDB db = new HospitalDB();
+        IDataBaseUnit db;
+
+        public PatientController(IDataBaseUnit dbUnit)
+        {
+            db = dbUnit;
+        }
 
         [HttpGet]
         public ActionResult Index(string searchKey)
@@ -159,15 +162,6 @@ namespace Hospital.Controllers
         //    var result = db.Patients.GetAll().Any(p => p.TaxCode == taxcode);
         //    return Json(!result, JsonRequestBehavior.AllowGet);
         //}
-        #endregion
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                db.Dispose();
-            }
-            base.Dispose(disposing);
-        }
+        #endregion            
     }
 }

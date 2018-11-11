@@ -1,8 +1,8 @@
 ﻿using Hospital.App_Start;
+using Hospital.DAL.DependencyInjection;
 using Hospital.DAL.Repository.EfRepository;
-using Hospital.Models;
-using Hospital.Models.DAL.Abstracts;
-using Hospital.Models.DAL.Repository.EfRepository;
+using Ninject;
+using Ninject.Web.Mvc;
 using System.Data.Entity;
 using System.Web.Mvc;
 using System.Web.Optimization;
@@ -18,7 +18,10 @@ namespace Hospital
 
             AreaRegistration.RegisterAllAreas();
             RouteConfig.RegisterRoutes(RouteTable.Routes);
-            BundleConfig.RegisterBundles(BundleTable.Bundles);            
+            BundleConfig.RegisterBundles(BundleTable.Bundles);
+
+            var kernel = new StandardKernel(new NinjectRegistration());
+            DependencyResolver.SetResolver(new NinjectDependencyResolver(kernel));
         }
     }
 }
