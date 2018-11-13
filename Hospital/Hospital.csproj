@@ -195,6 +195,7 @@
     <Content Include="Views\Specialization\Details.cshtml" />
     <Content Include="Views\Specialization\Delete.cshtml" />
     <Content Include="Views\Specialization\Edit.cshtml" />
+    <Content Include="Views\Patient\DisplayTemplates\DateTime.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

@@ -1,7 +1,6 @@
 ﻿using Hospital.DAL.Abstracts;
 using Hospital.Models;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Web.Mvc;
@@ -106,7 +105,7 @@ namespace Hospital.Controllers
         {
             if (ModelState.IsValid)
             {
-                Patient patient = db.Patients.Get(viewModel.Id);
+                Patient patient = db.Patients.Get((int)viewModel.Id);
                 patient.Name = viewModel.Name;
                 patient.Status = viewModel.Status;
                 patient.Birthday = viewModel.Birthday;
@@ -148,12 +147,19 @@ namespace Hospital.Controllers
             return Json(!(DateTime.Now.Date < birthday.Date), JsonRequestBehavior.AllowGet);
         }
 
-        #region
-        //public JsonResult UniqueTaxCheck(string taxcode)
-        //{
-        //    var result = db.Patients.GetAll().Any(p => p.TaxCode == taxcode);
-        //    return Json(!result, JsonRequestBehavior.AllowGet);
-        //}
-        #endregion            
+        public JsonResult UniqueTaxCheck(string taxcode, int? id)
+        {
+            bool result;
+            var patient = db.Patients.GetAll().FirstOrDefault(p => p.TaxCode == taxcode);
+            if (id == null)
+            {
+                result = (patient != null);
+            }
+            else
+            {
+                result = (patient != null) && (patient.Id != id);
+            }
+            return Json(!result, JsonRequestBehavior.AllowGet);
+        }     
     }
 }

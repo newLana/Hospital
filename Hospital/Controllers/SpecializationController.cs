@@ -120,5 +120,11 @@ namespace Hospital.Controllers
             db.Specializations.Delete(id);
             return RedirectToAction("Index");
         }
+
+        //public JsonResult UniqueName(string name)
+        //{
+        //    var isUnique = !db.Specializations.GetAll().Any(s => s.Name == name);
+        //    return Json(isUnique, JsonRequestBehavior.AllowGet);
+        //}
     }
 }
