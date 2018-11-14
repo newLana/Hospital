@@ -1,4 +1,5 @@
 ﻿@model Hospital.Models.Specialization
+@using System.Web.Optimization
 
 @{
     ViewBag.Title = "Create";
@@ -6,10 +7,10 @@
 
 <h2>Create</h2>
 
-@using (Html.BeginForm()) 
+@using (Html.BeginForm())
 {
     @Html.AntiForgeryToken()
-    
+
     <div class="form-horizontal">
         <h4>Specialization</h4>
         <hr />
@@ -33,3 +34,9 @@
 <div>
     @Html.ActionLink("Back to List", "Index")
 </div>
+
+
+@section scripts
+{
+    @Scripts.Render("~/Scripts/jqueryval")
+}

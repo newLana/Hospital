@@ -1,5 +1,6 @@
 ﻿using Hospital.DAL.Abstracts;
 using Hospital.Models;
+using Hospital.Models.Entities;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -10,21 +11,23 @@ namespace Hospital.Controllers
     public class DoctorController : Controller
     {
         IDataBaseUnit db;
+        DoctorUpdater updater;
 
         public DoctorController(IDataBaseUnit dbUnit)
         {
             db = dbUnit;
+            updater = new DoctorUpdater(db);
         }
 
         [HttpGet]
         public ActionResult Index(string searchKey)
         {
-            if (!string.IsNullOrWhiteSpace(searchKey))
+            if(string.IsNullOrEmpty(searchKey))
             {
-                return View("Index", db.Doctors.GetAll()
-                    .Where(d => d.Name.Contains(searchKey)));
+                return View(db.Doctors.GetAll());
             }
-            return View(db.Doctors.GetAll());
+            return View(db.Doctors.GetAll()
+                .Where(d => d.Name.CaseInsensitiveContains(searchKey)));
         }
 
         [HttpGet]
@@ -46,8 +49,7 @@ namespace Hospital.Controllers
         public ActionResult Create()
         {
             var viewModel = new DoctorViewModel();
-            viewModel.Specializations = new MultiSelectList(db.Specializations
-                                    .GetAll().OrderBy(s => s.Name), "Id", "Name");
+            viewModel.Specializations = updater.SpecToMultiselect(null);
             return View(viewModel);
         }
 
@@ -58,12 +60,7 @@ namespace Hospital.Controllers
         {
             if (ModelState.IsValid)
             {
-                Doctor doctor = new Doctor
-                {
-                    Name = viewModel.Name
-                };
-                doctor.Specializations.AddRange(db.Specializations.GetAll().Where(s =>
-                             viewModel.SpecIds.Contains(s.Id)));
+                Doctor doctor = updater.ToDoctor(viewModel);
                 db.Doctors.Create(doctor);
                 return RedirectToAction("Index");
             }
@@ -82,15 +79,9 @@ namespace Hospital.Controllers
             {
                 return HttpNotFound();
             }
-            var viewModel = new DoctorViewModel
-            {
-                Id = doctor.Id,
-                Name = doctor.Name,
-                Specializations = new MultiSelectList(db.Specializations.GetAll().OrderBy(s => s.Name),
-                                    "Id", "Name", doctor.Specializations.Select(s => s.Id)),
-                Patients = new MultiSelectList(db.Patients.GetAll(), 
-                                    "Id", "Name", doctor.Patients.Select(p => p.Id))
-            };
+
+            var viewModel = updater.FromDoctor(doctor);
+
             return View(viewModel);
         }
 
@@ -101,15 +92,10 @@ namespace Hospital.Controllers
         {
             if (ModelState.IsValid)
             {
-                Doctor doctor = db.Doctors.Get(viewModel.Id);
-                doctor.Name = viewModel.Name;
-                doctor.Specializations.Clear();
-                doctor.Specializations.AddRange(db.Specializations.GetAll().Where(s =>
-                            viewModel.SpecIds.Contains(s.Id)));
-                doctor.Patients.Clear();
-                doctor.Patients.AddRange(db.Patients.GetAll().Where(p =>
-                        viewModel.PatientIds.Contains(p.Id)));
+                Doctor doctor = updater.ToDoctor(viewModel);
+
                 db.Doctors.Update(doctor);
+
                 return RedirectToAction("Index");
             }
             return View(viewModel);
@@ -134,7 +120,7 @@ namespace Hospital.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Delete(int id)
         {
-            db.Doctors.Delete(id);            
+            db.Doctors.Delete(id);                 
             return RedirectToAction("Index");
         }        
     }

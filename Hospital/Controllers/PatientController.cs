@@ -1,5 +1,6 @@
 ﻿using Hospital.DAL.Abstracts;
 using Hospital.Models;
+using Hospital.Models.ViewModelUpdaters;
 using System;
 using System.Linq;
 using System.Net;
@@ -10,10 +11,12 @@ namespace Hospital.Controllers
     public class PatientController : Controller
     {
         IDataBaseUnit db;
+        PatientUpdater updater;
 
         public PatientController(IDataBaseUnit dbUnit)
         {
             db = dbUnit;
+            updater = new PatientUpdater(db);
         }
 
         [HttpGet]
@@ -22,7 +25,7 @@ namespace Hospital.Controllers
             if (!string.IsNullOrWhiteSpace(searchKey))
             {
                 return View("Index", db.Patients.GetAll()
-                    .Where(d => d.Name.Contains(searchKey)));
+                    .Where(d => d.Name.CaseInsensitiveContains(searchKey)));
             }
             return View(db.Patients.GetAll());
         }
@@ -47,7 +50,7 @@ namespace Hospital.Controllers
         {
             var viewModel = new PatientViewModel();
             viewModel.Birthday = DateTime.Now;
-            viewModel.Doctors = new MultiSelectList(db.Doctors.GetAll(), "Id", "Name");
+            viewModel.Doctors = updater.DoctorsToMultiselect(null);
             return View(viewModel);
         }
 
@@ -58,15 +61,7 @@ namespace Hospital.Controllers
         {
             if (ModelState.IsValid)
             {
-                Patient patient = new Patient
-                {
-                    Name = viewModel.Name,
-                    Status = viewModel.Status,
-                    Birthday = viewModel.Birthday,
-                    TaxCode = viewModel.TaxCode
-                };
-                patient.Doctors.AddRange(db.Doctors.GetAll()
-                                .Where(d => viewModel.DocIds.Contains(d.Id)));
+                Patient patient = updater.ToPatient(viewModel);
                 db.Patients.Create(patient);
                 return RedirectToAction("Index");
             }
@@ -85,16 +80,7 @@ namespace Hospital.Controllers
             {
                 return HttpNotFound();
             }
-            var viewModel = new PatientViewModel
-            {
-                Id = patient.Id,
-                Name = patient.Name,
-                Status = patient.Status,
-                Birthday = patient.Birthday,
-                TaxCode = patient.TaxCode,
-                Doctors = new MultiSelectList(db.Doctors.GetAll(),
-                                    "Id", "Name", patient.Doctors.Select(d => d.Id))
-            };
+            var viewModel = updater.FromPatient(patient);
             return View(viewModel);
         }
 
@@ -105,14 +91,7 @@ namespace Hospital.Controllers
         {
             if (ModelState.IsValid)
             {
-                Patient patient = db.Patients.Get((int)viewModel.Id);
-                patient.Name = viewModel.Name;
-                patient.Status = viewModel.Status;
-                patient.Birthday = viewModel.Birthday;
-                patient.TaxCode = viewModel.TaxCode;
-                patient.Doctors.Clear();
-                patient.Doctors.AddRange(db.Doctors.GetAll().Where(d => 
-                            viewModel.DocIds.Contains(d.Id)));
+                Patient patient = updater.ToPatient(viewModel);
                 db.Patients.Update(patient);
                 return RedirectToAction("Index");
             }

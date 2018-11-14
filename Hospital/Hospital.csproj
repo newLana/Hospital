@@ -166,11 +166,15 @@
     <Compile Include="Models\Entities\Doctor.cs" />
     <Compile Include="DAL\Repositories\EfRepository\HospitalContext.cs" />
     <Compile Include="Models\DoctorViewModel.cs" />
+    <Compile Include="Models\ViewModelUpdaters\DoctorUpdater.cs" />
     <Compile Include="Models\Entities\Specialization.cs" />
     <Compile Include="Models\Entities\Patient.cs" />
     <Compile Include="Models\Entities\PatientStatus.cs" />
     <Compile Include="Models\SpecializationViewModel.cs" />
     <Compile Include="Models\PatientViewModel.cs" />
+    <Compile Include="Models\StringExtension.cs" />
+    <Compile Include="Models\ViewModelUpdaters\PatientUpdater.cs" />
+    <Compile Include="Models\ViewModelUpdaters\SpecializationUpdater.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

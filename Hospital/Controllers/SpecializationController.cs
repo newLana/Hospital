@@ -3,16 +3,20 @@ using Hospital.Models;
 using System.Linq;
 using System.Net;
 using System.Web.Mvc;
+using System;
+using Hospital.Models.ViewModelUpdaters;
 
 namespace Hospital.Controllers
 {
     public class SpecializationController : Controller
     {
         IDataBaseUnit db;
+        SpecializationUpdater updater;
 
         public SpecializationController(IDataBaseUnit db)
         {
             this.db = db;
+            updater = new SpecializationUpdater(db);
         }
 
         // GET: Specialization
@@ -20,7 +24,8 @@ namespace Hospital.Controllers
         {
             if(!string.IsNullOrEmpty(searchKey))
             {
-                return View(db.Specializations.GetAll().Where(s => s.Name.Contains(searchKey)));
+                return View(db.Specializations.GetAll().
+                    Where(s => s.Name.CaseInsensitiveContains(searchKey)));
             }
             return View(db.Specializations.GetAll().OrderBy(s => s.Name));
         }
@@ -33,7 +38,7 @@ namespace Hospital.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(Specialization specialization)
+        public ActionResult Create([Bind(Include = "Name")]Specialization specialization)
         {
             if (ModelState.IsValid)
             {
@@ -70,12 +75,7 @@ namespace Hospital.Controllers
             {
                 return HttpNotFound();
             }
-            var viewModel = new SpecializationViewModel()
-            {
-                Id = spec.Id,
-                Name = spec.Name
-            };
-            viewModel.Doctors = new MultiSelectList(db.Doctors.GetAll(), "Id", "Name", spec.Doctors.Select(d => d.Id));
+            var viewModel = updater.FromSpecialization(spec);
             return View(viewModel);
         }
 
@@ -85,13 +85,7 @@ namespace Hospital.Controllers
         {
             if (ModelState.IsValid)
             {
-                var spec = db.Specializations.Get(viewModel.Id);
-                spec.Id = viewModel.Id;
-                spec.Name = viewModel.Name;
-                spec.Doctors.Clear();
-                spec.Doctors.AddRange(db.Doctors.GetAll().Where(d => 
-                                    viewModel.DocIds.Contains(d.Id)));
-
+                var spec = updater.ToSpecialization(viewModel);
                 db.Specializations.Update(spec);
                 return RedirectToAction("Index");
             }
@@ -121,10 +115,20 @@ namespace Hospital.Controllers
             return RedirectToAction("Index");
         }
 
-        //public JsonResult UniqueName(string name)
-        //{
-        //    var isUnique = !db.Specializations.GetAll().Any(s => s.Name == name);
-        //    return Json(isUnique, JsonRequestBehavior.AllowGet);
-        //}
+        public JsonResult UniqueName(string name, int? id)
+        {
+            var specialization = db.Specializations.GetAll()
+                .FirstOrDefault(s => s.Name == name);
+            bool isUnique;
+            if (id == null)
+            {
+                isUnique = specialization == null;
+            }
+            else
+            {
+                isUnique = specialization == null || specialization.Id == id;
+            }
+            return Json(isUnique, JsonRequestBehavior.AllowGet);
+        }
     }
 }
