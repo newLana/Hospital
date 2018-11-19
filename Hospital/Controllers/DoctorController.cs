@@ -1,17 +1,31 @@
 ﻿using Hospital.DAL.Abstracts;
 using Hospital.Models;
+using Hospital.Models.Account;
 using Hospital.Models.Entities;
+using Microsoft.AspNet.Identity;
+using Microsoft.AspNet.Identity.Owin;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Web;
 using System.Web.Mvc;
 
 namespace Hospital.Controllers
 {
+    [Authorize(Roles = "admin,doctor")]
     public class DoctorController : Controller
     {
         IDataBaseUnit db;
+
         DoctorUpdater updater;
+
+        private ApplicationUserManager UserManager
+        {
+            get
+            {
+                return HttpContext.GetOwinContext().GetUserManager<ApplicationUserManager>();
+            }
+        }
 
         public DoctorController(IDataBaseUnit dbUnit)
         {
@@ -55,14 +69,32 @@ namespace Hospital.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include ="Name,SpecIds")]
-                                    DoctorViewModel viewModel)
+        public ActionResult Create(DoctorViewModel viewModel)
         {
             if (ModelState.IsValid)
             {
-                Doctor doctor = updater.ToDoctor(viewModel);
-                db.Doctors.Create(doctor);
-                return RedirectToAction("Index");
+                var registerModel = new RegisterViewModel
+                {
+                    Email = viewModel.Email,
+                    Password = viewModel.Password
+                };
+                if (Register(registerModel))
+                {
+                    var user = UserManager.FindByEmail(registerModel.Email);
+                    if (user != null)
+                    {
+                        UserManager.AddToRole(user.Id, "doctor");
+                        viewModel.AccountId = user.Id;
+                        Doctor doctor = updater.ToDoctor(viewModel);
+                        db.Doctors.Create(doctor);
+                        user.EntityId = (int)doctor.Id;
+                        return RedirectToAction("Index", "Doctor");
+                    }
+                }
+                else
+                {
+                    return new HttpStatusCodeResult(500);
+                }
             }
             return View(viewModel);
         }
@@ -79,24 +111,28 @@ namespace Hospital.Controllers
             {
                 return HttpNotFound();
             }
-
             var viewModel = updater.FromDoctor(doctor);
-
+            viewModel.Email = UserManager.FindById(doctor.AccountId).Email;
             return View(viewModel);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "Id,Name,SpecIds,PatientIds")]
-                                                    DoctorViewModel viewModel)
+        public ActionResult Edit([Bind(Include ="Id,AccountId,Email,Name,SpecIds,PatientIds")]
+        DoctorEditModel viewModel)
         {
             if (ModelState.IsValid)
             {
                 Doctor doctor = updater.ToDoctor(viewModel);
-
                 db.Doctors.Update(doctor);
-
-                return RedirectToAction("Index");
+                var user = UserManager.FindById(viewModel.AccountId);
+                user.Email = viewModel.Email;
+                user.UserName = viewModel.Email;
+                if (UserManager.Update(user).Succeeded)
+                {
+                    return RedirectToAction("Index");
+                }
+                return new HttpStatusCodeResult(500);
             }
             return View(viewModel);
         }
@@ -120,8 +156,41 @@ namespace Hospital.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Delete(int id)
         {
-            db.Doctors.Delete(id);                 
+            var doctor = db.Doctors.Get(id); 
+            if (doctor.AccountId != User.Identity.GetUserId())
+            {
+                var user = UserManager.FindById(doctor.AccountId);
+                if (user != null && UserManager.Delete(user).Succeeded)
+                {
+                    db.Doctors.Delete(id);
+                }
+                else
+                {
+                    return new HttpStatusCodeResult(500);
+                }
+            }
             return RedirectToAction("Index");
-        }        
+        }
+
+        private bool Register(RegisterViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                ApplicationUser user = new ApplicationUser
+                {
+                    UserName = model.Email,
+                    Email = model.Email
+                };
+
+                IdentityResult result = UserManager.Create(user, model.Password);
+
+                if (result.Succeeded)
+                {
+                    result = UserManager.AddToRole(user.Id, "patient");
+                    return result.Succeeded;
+                }
+            }
+            return false;
+        }
     }
 }

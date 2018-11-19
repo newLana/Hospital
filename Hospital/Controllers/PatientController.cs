@@ -1,17 +1,31 @@
 ﻿using Hospital.DAL.Abstracts;
 using Hospital.Models;
+using Hospital.Models.Account;
 using Hospital.Models.ViewModelUpdaters;
+using Microsoft.AspNet.Identity;
+using Microsoft.AspNet.Identity.Owin;
 using System;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
+using System.Web;
 using System.Web.Mvc;
 
 namespace Hospital.Controllers
-{
+{    
     public class PatientController : Controller
     {
         IDataBaseUnit db;
+
         PatientUpdater updater;
+
+        private ApplicationUserManager UserManager
+        {
+            get
+            {
+                return HttpContext.GetOwinContext().GetUserManager<ApplicationUserManager>();
+            }
+        }
 
         public PatientController(IDataBaseUnit dbUnit)
         {
@@ -20,6 +34,7 @@ namespace Hospital.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "admin,doctor")]
         public ActionResult Index(string searchKey)
         {
             if (!string.IsNullOrWhiteSpace(searchKey))
@@ -31,6 +46,7 @@ namespace Hospital.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "admin,doctor,patient")]
         public ActionResult Details(int? id)
         {
             if (id == null)
@@ -46,29 +62,51 @@ namespace Hospital.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "admin,doctor")]
         public ActionResult Create()
         {
             var viewModel = new PatientViewModel();
-            viewModel.Birthday = DateTime.Now;
+            viewModel.Birthday = DateTime.Now;            
             viewModel.Doctors = updater.DoctorsToMultiselect(null);
             return View(viewModel);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include ="Name,Status,Birthday,TaxCode,DocIds")]
-                                    PatientViewModel viewModel)
+        [Authorize(Roles = "admin,doctor")]
+        public ActionResult Create(PatientViewModel viewModel)
         {
             if (ModelState.IsValid)
             {
-                Patient patient = updater.ToPatient(viewModel);
-                db.Patients.Create(patient);
-                return RedirectToAction("Index");
+                var registerModel = new RegisterViewModel
+                {
+                    Email = viewModel.Email,
+                    Password = viewModel.Password
+                };                
+                if(Register(registerModel))
+                {
+                    var user = UserManager.FindByEmail(registerModel.Email);
+                    if (user != null)
+                    {
+                        UserManager.AddToRole(user.Id, "patient");
+                        viewModel.AccountId = user.Id;
+                        Patient patient = updater.ToPatient(viewModel);
+                        patient = db.Patients.Create(patient);
+
+                        user.EntityId = (int)patient.Id;
+                        return RedirectToAction("Index", "Patient");
+                    }
+                }
+                else
+                {
+                    return new HttpStatusCodeResult(500);
+                }                 
             }
             return View(viewModel);
         }
 
         [HttpGet]
+        [Authorize(Roles = "admin,doctor")]
         public ActionResult Edit(int? id)
         {
             if (id == null)
@@ -81,24 +119,33 @@ namespace Hospital.Controllers
                 return HttpNotFound();
             }
             var viewModel = updater.FromPatient(patient);
+            viewModel.Email = UserManager.FindById(patient.AccountId).Email;
             return View(viewModel);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "Id,Name,Status,Birthday,TaxCode,DocIds")]
-                                                    PatientViewModel viewModel)
+        [Authorize(Roles = "admin,doctor")]
+        public ActionResult Edit(PatientEditModel viewModel)
         {
             if (ModelState.IsValid)
             {
                 Patient patient = updater.ToPatient(viewModel);
                 db.Patients.Update(patient);
-                return RedirectToAction("Index");
+                var user = UserManager.FindById(viewModel.AccountId);
+                user.Email = viewModel.Email;
+                user.UserName = viewModel.Email;
+                if (UserManager.Update(user).Succeeded)
+                {
+                    return RedirectToAction("Index");
+                }
+                return new HttpStatusCodeResult(500);
             }
             return View(viewModel);
         }
 
         [HttpGet]
+        [Authorize(Roles = "admin,doctor")]
         public ActionResult Delete(int? id)
         {
             if (id == null)
@@ -115,9 +162,22 @@ namespace Hospital.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "admin,doctor")]
         public ActionResult Delete(int id)
         {
-            db.Patients.Delete(id);
+            var patient = db.Patients.Get(id);
+            if (patient.AccountId != User.Identity.GetUserId())
+            {
+                var user = UserManager.FindById(patient.AccountId);
+                if (user != null && UserManager.Delete(user).Succeeded)
+                {
+                    db.Patients.Delete(id);
+                }
+                else
+                {
+                    return new HttpStatusCodeResult(500);
+                }
+            }
             return RedirectToAction("Index");
         }
 
@@ -139,6 +199,27 @@ namespace Hospital.Controllers
                 result = (patient != null) && (patient.Id != id);
             }
             return Json(!result, JsonRequestBehavior.AllowGet);
-        }     
+        }
+
+        private bool Register(RegisterViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                ApplicationUser user = new ApplicationUser
+                {
+                    UserName = model.Email,
+                    Email = model.Email
+                };
+
+                IdentityResult result = UserManager.Create(user, model.Password);
+
+                if (result.Succeeded)
+                {
+                    result = UserManager.AddToRole(user.Id, "patient");
+                    return result.Succeeded;
+                }
+            }
+            return false;
+        }
     }
 }

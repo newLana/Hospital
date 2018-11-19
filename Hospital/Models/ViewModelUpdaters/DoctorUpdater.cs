@@ -17,7 +17,7 @@ namespace Hospital.Models.Entities
             this.db = db;
         }
 
-        public Doctor ToDoctor(DoctorViewModel viewModel)
+        public Doctor ToDoctor(DoctorEditModel viewModel)
         {
             Doctor doctor;
             if (viewModel.Id == null)
@@ -39,24 +39,25 @@ namespace Hospital.Models.Entities
             {
                 doctor.Patients.AddRange(PatientsForDoctor(viewModel));
             }
+            doctor.AccountId = viewModel.AccountId;
             return doctor;
         }
 
-        private IEnumerable<Specialization> SpecializationsForDoctor(DoctorViewModel viewModel)
+        private IEnumerable<Specialization> SpecializationsForDoctor(DoctorEditModel viewModel)
         {
             return db.Specializations.GetAll().Where(s =>
                    viewModel.SpecIds.Contains((int)s.Id));
         }
 
-        private IEnumerable<Patient> PatientsForDoctor(DoctorViewModel viewModel)
+        private IEnumerable<Patient> PatientsForDoctor(DoctorEditModel viewModel)
         {
             return db.Patients.GetAll().Where(p =>
                                 viewModel.PatientIds.Contains((int)p.Id));
         }
 
-        public DoctorViewModel FromDoctor(Doctor doctor)
+        public DoctorEditModel FromDoctor(Doctor doctor)
         {
-            DoctorViewModel viewModel = new DoctorViewModel();
+            DoctorEditModel viewModel = new DoctorEditModel();
 
             if (doctor.Id != null)
             {
@@ -69,6 +70,7 @@ namespace Hospital.Models.Entities
 
             viewModel.Patients = PatientsToMultiselect(doctor.Patients.Select(p => p.Id));
 
+            viewModel.AccountId = doctor.AccountId;
             return viewModel;
         }
 

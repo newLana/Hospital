@@ -1,5 +1,5 @@
 ﻿@model Hospital.Models.Doctor
-
+@using Hospital.Infrastructure
 @{
     ViewBag.Title = "Details";
 }
@@ -17,7 +17,13 @@
         <dd>
             @Html.DisplayFor(model => model.Name)
         </dd>
+        <dt>
+            @Html.DisplayName("UserName")
+        </dt>
 
+        <dd>
+            @Html.GetUserName(Model.AccountId)
+        </dd>
         <dt>
             @Html.DisplayNameFor(model => model.Specializations)
         </dt>
@@ -35,7 +41,7 @@
         </dt>
         <dd>
             <ul>
-                @foreach(var item in Model.Patients)
+                @foreach (var item in Model.Patients)
                 {
                     <li>@item.Name </li>
                 }

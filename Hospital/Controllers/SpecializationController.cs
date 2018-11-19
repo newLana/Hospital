@@ -8,6 +8,7 @@ using Hospital.Models.ViewModelUpdaters;
 
 namespace Hospital.Controllers
 {
+    [Authorize(Roles ="admin,doctor")]
     public class SpecializationController : Controller
     {
         IDataBaseUnit db;

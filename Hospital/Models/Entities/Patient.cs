@@ -20,5 +20,7 @@ namespace Hospital.Models
 
         public virtual List<Doctor> Doctors { get; set; } =
             new List<Doctor>();
+
+        public string AccountId { get; set; }
     }
 }

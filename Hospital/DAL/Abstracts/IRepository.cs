@@ -8,7 +8,7 @@ namespace Hospital.Models.DAL.Abstracts
 
         T Get(int id);
 
-        void Create(T item);
+        T Create(T item);
 
         void Update(T item);
 

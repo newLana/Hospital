@@ -5,19 +5,21 @@ using System.Collections;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using Hospital.Models.Account;
+using Microsoft.AspNet.Identity.Owin;
 
 namespace Hospital.Models.ViewModelUpdaters
 {
     public class PatientUpdater
     {
-        IDataBaseUnit db;
+        IDataBaseUnit db;        
 
         public PatientUpdater(IDataBaseUnit db)
         {
             this.db = db;
         }
         
-        public Patient ToPatient(PatientViewModel viewModel)
+        public Patient ToPatient(PatientEditModel viewModel)
         {
             Patient patient;
             if (viewModel.Id != null)
@@ -32,23 +34,24 @@ namespace Hospital.Models.ViewModelUpdaters
             patient.Status = viewModel.Status;
             patient.Birthday = viewModel.Birthday;
             patient.TaxCode = viewModel.TaxCode;
-            patient.Doctors.Clear();
             if (viewModel.DocIds != null)
             {
+                patient.Doctors.Clear();
                 patient.Doctors.AddRange(DoctorsForPatient(viewModel));
             }
+            patient.AccountId = viewModel.AccountId;
             return patient;
         }
 
-        private IEnumerable<Doctor> DoctorsForPatient(PatientViewModel viewModel)
+        private IEnumerable<Doctor> DoctorsForPatient(PatientEditModel viewModel)
         {
             return db.Doctors.GetAll().Where(d =>
                      viewModel.DocIds.Contains((int)d.Id));
         }
 
-        public PatientViewModel FromPatient(Patient patient)
+        public PatientEditModel FromPatient(Patient patient)
         {
-            var viewModel = new PatientViewModel();
+            var viewModel = new PatientEditModel();
             if (patient.Id != null)
             {
                 viewModel.Id = patient.Id;
@@ -58,6 +61,7 @@ namespace Hospital.Models.ViewModelUpdaters
             viewModel.Birthday = patient.Birthday;
             viewModel.TaxCode = patient.TaxCode;
             viewModel.Doctors = DoctorsToMultiselect(patient.Doctors.Select(d => d.Id));
+            viewModel.AccountId = patient.AccountId;
             return viewModel;
         }
 

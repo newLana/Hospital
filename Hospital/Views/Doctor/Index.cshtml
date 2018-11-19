@@ -1,4 +1,5 @@
 ﻿@model IEnumerable<Doctor>
+@using Hospital.Infrastructure
 
 @{
     ViewBag.Title = "Doctors";
@@ -6,7 +7,7 @@
 
 <h2>Doctors</h2>
 
-@Html.Partial("Search")
+@Html.Partial("_Search")
 
 <p>
     @Html.ActionLink("Create New", "Create")
@@ -18,6 +19,9 @@
         </th>
         <th>
             @Html.DisplayNameFor(model => model.Specializations)
+        </th>
+        <th>
+            @Html.DisplayName("UserName")
         </th>
         <th></th>
     </tr>
@@ -36,6 +40,9 @@
                     }
                 </ul>
             </td>
+            <td>
+                @Html.GetUserName(item.AccountId)
+            </td>
             <th></th>
             <td>
                 @Html.ActionLink("Edit", "Edit", new { id = item.Id }) |
@@ -45,7 +52,3 @@
         </tr>
     }
 </table>
-
-<p>
-    @Html.ActionLink("Specializations", "Index", "Specialization", "", new { @class = "btn btn-primary", role = "button" })
-</p>

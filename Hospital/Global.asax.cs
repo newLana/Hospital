@@ -1,6 +1,8 @@
 ﻿using Hospital.App_Start;
 using Hospital.DAL.DependencyInjection;
+using Hospital.DAL.Repositories.EfRepository;
 using Hospital.DAL.Repository.EfRepository;
+using Hospital.Models.Account;
 using Ninject;
 using Ninject.Web.Mvc;
 using System.Data.Entity;
@@ -14,7 +16,8 @@ namespace Hospital
     {
         protected void Application_Start()
         {
-            Database.SetInitializer(new HospitalDbInitializer());
+            Database.SetInitializer(new IdentityContextInitializer());
+            Database.SetInitializer(new HospitalInitializer());
 
             AreaRegistration.RegisterAllAreas();
             RouteConfig.RegisterRoutes(RouteTable.Routes);

@@ -17,10 +17,11 @@ namespace Hospital.DAL.Repositories.EfRepository
             db = dbContext;
         }
 
-        public void Create(T item)
+        public T Create(T item)
         {
-            db.Set<T>().Add(item);
+            T t = db.Set<T>().Add(item);
             db.SaveChanges();
+            return t;
         }
 
         public void Delete(int id)
